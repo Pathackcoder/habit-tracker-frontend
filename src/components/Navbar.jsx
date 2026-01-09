@@ -39,7 +39,7 @@ const Navbar = ({ isAuth = false }) => {
           {/* Logo */}
           <Link to={isAuth ? "/dashboard" : "/"} className="flex items-center space-x-2">
             <div className='h-32 w-32'>
-              <img src="../../public/images/Stoic-Habit.png" alt="Stoic Habit" />
+              <img src="/images/Stoic-Habit.png" alt="Stoic Habit" />
             </div>
           </Link>
 
