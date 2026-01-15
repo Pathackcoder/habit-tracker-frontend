@@ -69,6 +69,7 @@ const Login = () => {
 
         {/* IMAGE SECTION */}
         <div className="hidden lg:flex w-1/2 items-center justify-center relative">
+        
 
           <div
             className={`absolute w-[450px] h-[450px] rounded-full blur-3xl opacity-20 contrast-110 brightness-105
@@ -79,22 +80,32 @@ const Login = () => {
           <motion.img
             src="/images/login-Image-new.png"
             alt="Login Illustration"
-            className="w-[700px] h-[700px] object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.45)]"
+            className="w-[550px] h-[550px] xl:w-[700px] xl:h-[700px] object-contain drop-shadow-[0_30px_40px_rgba(0,0,0,0.45)]"
             animate={{ y: [0, -50, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           />
 
         </div>
+        {/* MOBILE BACKGROUND IMAGE */}
+        <div className="absolute inset-0 lg:hidden">
+          <img
+            src="/images/login-Image-new.png"
+            alt=""
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
+
 
         {/* FORM */}
-        <div className="flex w-full lg:w-1/2 items-center justify-center px-4">
+        <div className="relative flex w-full lg:w-1/2 items-center justify-center px-4 z-10">
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             whileHover={{ y: -4 }}
             className={`
-              relative w-full max-w-md p-10 rounded-3xl
+              relative w-full max-w-md p-6 sm:p-8 lg:p-10 rounded-3xl
               transition-all duration-300
               backdrop-blur-xl
               ${theme === 'dark'
@@ -112,7 +123,7 @@ const Login = () => {
             `}
           >
 
-            <h1 className={`text-3xl font-semibold tracking-tight ${
+            <h1 className={`text-2xl sm:text-3xl  font-semibold tracking-tight ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               Welcome back
@@ -208,6 +219,7 @@ const Login = () => {
                   hover:scale-[1.03]
                   active:scale-[0.96]
                   hover:shadow-[0_20px_40px_-10px_rgba(59,130,246,0.6)]
+                  shadow-[0_15px_35px_-10px_rgba(59,130,246,0.6)]
                   ${theme === 'dark'
                     ? 'bg-accent-dark'
                     : 'bg-accent-light'

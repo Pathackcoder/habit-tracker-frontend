@@ -86,7 +86,15 @@ const Signup = () => {
         />
 
         </div>
-
+                  {/* MOBILE BACKGROUND IMAGE */}
+        <div className="absolute inset-0 lg:hidden">
+          <img
+            src="/images/login-Image-new.png"
+            alt=""
+            className="w-full h-full object-cover opacity-20"
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </div>
 
         {/* FORM */}
         <div className="flex w-full lg:w-1/2 items-center justify-center px-4">
