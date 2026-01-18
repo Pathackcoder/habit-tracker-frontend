@@ -155,11 +155,16 @@ const closeHabitModal = () => {
 const toggleDay = async (habitId, day) => {
 
   const now = new Date();
-    const date = new Date(Date.UTC(
+
+  const date = new Date(
     currentMonthDate.getFullYear(),
     currentMonthDate.getMonth(),
     day
-  ));
+  );
+
+  // normalize local date
+  date.setHours(0, 0, 0, 0);
+
   console.log("the date>>>>>>>>", date)
 
   const key = formatKey(habitId, date);
@@ -171,7 +176,7 @@ const toggleDay = async (habitId, day) => {
     ...prev,
     [key]: newCompleted
   }));
-
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
   try {
     const token = localStorage.getItem("token");
 
@@ -181,8 +186,9 @@ const toggleDay = async (habitId, day) => {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
+      
       body: JSON.stringify({
-        date: date.toISOString(),
+        date: dateStr,
         completed: newCompleted
       })
     });
@@ -280,7 +286,8 @@ useEffect(() => {
       currentMonthDate.getFullYear(),
       currentMonthDate.getMonth() + 1,
       0
-    )
+    );
+    endDate.setHours(23, 59, 59, 999);
 
       let map = {};
 
@@ -298,6 +305,7 @@ useEffect(() => {
 
         data.data.forEach(entry => {
           const d = new Date(entry.date);
+          d.setHours(0,0,0,0);
           const key = formatKey(habit._id, d);
           map[key] = entry.completed;
         });
@@ -356,7 +364,10 @@ useEffect(() => {
 }, [currentMonthDate]);
 
 const formatKey = (habitId, dateObj) => {
-  return `${habitId}-${dateObj.toISOString().slice(0,10)}`;
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${habitId}-${y}-${m}-${d}`;
 };
 
 if (loading) {
@@ -600,11 +611,12 @@ if (error) {
                         </td>
                         {days.map(({ day }) => {
                           // const dateObj = new Date(new Date().getFullYear(), new Date().getMonth(), day);
-                            const dateObj = new Date(Date.UTC(
+                            const dateObj = new Date(
                               currentMonthDate.getFullYear(),
                               currentMonthDate.getMonth(),
                               day
-                            ));
+                            );
+                            dateObj.setHours(0,0,0,0);
                             const weekday = dateObj.getDay() 
                             const isAllowed = habit.frequency?.days?.includes(weekday)
                           const key = formatKey(habit._id, dateObj);
