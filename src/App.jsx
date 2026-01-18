@@ -66,7 +66,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+          {/* <Route path="*" element={<Navigate to="/" />} /> */}
         </Routes>
       </Router>
     </ThemeProvider>
