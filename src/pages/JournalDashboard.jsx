@@ -94,7 +94,7 @@ const hasEntry = (day) => {
 
           <Link
             to={`/journal/new?date=${new Date().toLocaleDateString('en-CA')}`}
-            className="px-6 py-3 text-sm rounded-xl text-white bg-accent-dark hover:scale-105 transition"
+            className={`px-6 py-3 text-sm rounded-xl text-white ${theme === 'dark' ? 'bg-accent-dark' : 'bg-accent-light'}  hover:scale-105 transition`}
           >
             + New Entry
           </Link>
@@ -120,7 +120,9 @@ const hasEntry = (day) => {
                 <p className="text-xs uppercase text-gray-400 mb-2">
                   {item.label}
                 </p>
-                <p className="text-3xl text-[#379AE6]">
+                <p className={`text-3xl ${
+                        theme === 'dark' ? 'text-[#379AE6]' : 'text-[#0AB5CB]'
+                      }`}>
                   {item.value}
                 </p>
               </div>
@@ -164,7 +166,7 @@ const hasEntry = (day) => {
                   !day
                     ? ''
                     : hasEntry(day)
-                      ? 'bg-accent-dark text-white hover:scale-105'
+                      ? theme === 'dark' ? 'bg-accent-dark text-white hover:scale-105': 'bg-accent-light text-white hover:scale-105'
                       : theme === 'dark'
                         ? 'bg-gray-800 text-gray-400'
                         : 'bg-gray-100 text-gray-600'
