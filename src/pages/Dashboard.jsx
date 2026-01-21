@@ -1,10 +1,12 @@
 import React, { useState , useEffect } from 'react'
+import { useLayoutEffect } from "react";
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import Navbar from '../components/Navbar'
 import { toast } from "react-hot-toast"
 import HabitModal from '../components/HabitModal'
 import API from '../config/api'
+import { useRef } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 import {
   Chart as ChartJS,
@@ -33,7 +35,9 @@ ChartJS.register(
 const Dashboard = () => {
   const { theme } = useTheme()
   
-  
+const hasAutoScrolledRef = useRef(
+  sessionStorage.getItem("scrolledToday") === "1"
+);
 const [habits, setHabits] = useState([])
 const [loading, setLoading] = useState(true)
 const [error, setError] = useState(null)
@@ -52,6 +56,16 @@ const [averageRate, setAverageRate] = useState(0);
 const [habitStats, setHabitStats] = useState({});
 const [bestDay, setBestDay] = useState(null);
 const [activeDays, setActiveDays] = useState(0);
+
+
+const dayRefs = useRef({});
+const gridContainerRef = useRef(null);
+
+
+
+
+
+
 
 
 const fetchUserAnalytics = async () => {
@@ -208,6 +222,13 @@ const toggleDay = async (habitId, day) => {
   }
 };
 
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+const isToday = (dateObj) => {
+  return dateObj.getTime() === today.getTime();
+};
+
 
 // Generate all days of the current month with day names
 const getDaysInMonth = () => {
@@ -226,11 +247,71 @@ const getDaysInMonth = () => {
   return days
 }
 
+
 const days = getDaysInMonth()
 const currentMonth = currentMonthDate.toLocaleDateString(
   'en-US',
   { month: 'long', year: 'numeric' }
 )
+
+
+useLayoutEffect(() => {
+  // guards
+  if (!gridContainerRef.current) return;
+  if (!days.length) return;
+  if (hasAutoScrolledRef.current) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const sameMonth =
+    today.getFullYear() === currentMonthDate.getFullYear() &&
+    today.getMonth() === currentMonthDate.getMonth();
+
+  if (!sameMonth) return;
+
+  const todayDate = today.getDate();
+
+  // retry-safe scroll
+  const attemptScroll = () => {
+    const container = gridContainerRef.current;
+    const todayEl = dayRefs.current[todayDate];
+
+    if (!container || !todayEl) return false;
+
+    const containerRect = container.getBoundingClientRect();
+    const elRect = todayEl.getBoundingClientRect();
+
+    const isMobile = window.innerWidth < 768;
+    const scrollLeft =
+      elRect.left -
+      containerRect.left +
+      container.scrollLeft -
+      container.clientWidth * (isMobile ? 0.55 : 0.3);
+      elRect.width / 2;
+
+    container.scrollTo({
+      left: scrollLeft,
+      behavior: "smooth",
+    });
+
+    hasAutoScrolledRef.current = true;
+    return true;
+  };
+
+  // try immediately
+  if (attemptScroll()) return;
+
+  // retry once after DOM settles
+  const timer = setTimeout(() => {
+    attemptScroll();
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [currentMonthDate, days.length, habits.length]);
+
+
+
 
   const fetchHabits = async () => {
     try {
@@ -383,14 +464,13 @@ if (error) {
 
 
 
-
   return (
     <div className={`min-h-screen  transition-colors duration-200 ${
       theme === 'dark' ? 'bg-[#0C111D]' : 'bg-gray-50'
     }`}>
       <Navbar isAuth={true} userName="Amit" />
       
-      <div className="max-w-full  mx-auto px-4 sm:px-6 lg:px-16 py-8">
+      <div className="max-w-full mx-auto px-3 sm:px-6 lg:px-16 py-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className={`text-3xl font-medium mb-2 ${
@@ -418,10 +498,10 @@ if (error) {
             >
 
                 {/* HEADER */}
-                <div className="flex items-center justify-between mb-8">
+                <div className=" relative flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-8">
 
                   {/* LEFT : TITLE */}
-                  <div className="flex flex-col">
+                  <div className="flex flex-col mb-4 md:mb-0">
                     <h2 className={`text-2xl font-semibold tracking-tight ${
                       theme === 'dark' ? 'text-white' : 'text-gray-900'
                     }`}>
@@ -435,61 +515,68 @@ if (error) {
                   </div>
 
                   {/* CENTER : MONTH SELECTOR */}
-                  <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${
-                    theme === 'dark'
-                      ? 'border-gray-700 bg-gray-800/60'
-                      : 'border-gray-200 bg-gray-100/60'
-                  }`}>
-                    <button
-                      onClick={() =>
-                        setCurrentMonthDate(prev =>
-                          new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
-                        )
-                      }
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${
-                        theme === 'dark'
-                          ? 'hover:bg-gray-700 text-gray-300'
-                          : 'hover:bg-gray-200 text-gray-600'
-                      }`}
-                    >
-                      <FaArrowLeft />
-                    </button>
-
-                    <span className={`text-sm font-medium w-28 text-center ${
-                      theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                  <div className="flex justify-center md:absolute md:left-1/2 md:-translate-x-1/2 mb-4 md:mb-0">
+                    <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${
+                      theme === 'dark'
+                        ? 'border-gray-700 bg-gray-800/60'
+                        : 'border-gray-200 bg-gray-100/60'
                     }`}>
-                      {currentMonth}
-                    </span>
+                      <button
+                        onClick={() => {
+                          hasAutoScrolledRef.current = false;
+                          setCurrentMonthDate(prev =>
+                            new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
+                          );
+                        }}
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          theme === 'dark'
+                            ? 'hover:bg-gray-700 text-gray-300'
+                            : 'hover:bg-gray-200 text-gray-600'
+                        }`}
+                      >
+                        <FaArrowLeft />
+                      </button>
 
-                    <button
-                      onClick={() =>
-                        setCurrentMonthDate(prev =>
-                          new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
-                        )
-                      }
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${
-                        theme === 'dark'
-                          ? 'hover:bg-gray-700 text-gray-300'
-                          : 'hover:bg-gray-200 text-gray-600'
-                      }`}
-                    >
-                      <FaArrowRight />
-                    </button>
+                      <span className={`text-sm font-medium w-28 text-center ${
+                        theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                      }`}>
+                        {currentMonth}
+                      </span>
+
+                      <button
+                        onClick={() =>
+                          setCurrentMonthDate(prev =>
+                            new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
+                          )
+                        }
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          theme === 'dark'
+                            ? 'hover:bg-gray-700 text-gray-300'
+                            : 'hover:bg-gray-200 text-gray-600'
+                        }`}
+                      >
+                        <FaArrowRight />
+                      </button>
+                    </div>
                   </div>
 
+
                   {/* RIGHT : CTA */}
+                <div className="flex md:absolute md:right-0">
                   <Link
                     to="/habits/add"
-                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium
-                      transition-all hover:scale-105
+                    className={`w-full md:w-auto text-center inline-flex items-center justify-center gap-2
+                      px-5 py-2.5 rounded-xl text-sm font-medium transition-all
                       ${theme === 'dark'
-                        ? 'bg-accent-dark text-white hover:opacity-90'
-                        : 'bg-accent-light text-white hover:opacity-90'
+                        ? 'bg-accent-dark text-white'
+                        : 'bg-accent-light text-white'
                       }`}
                   >
                     <span className="text-lg leading-none">+</span>
                     Add Habit
                   </Link>
+                </div>
+
                 </div>
 
                 {/* DIVIDER */}
@@ -498,7 +585,7 @@ if (error) {
                 }`} />
 
               {/* Habit Grid */}
-              <div className="overflow-x-auto overflow-y-auto pb-2 rounded-xl flex-1">
+              <div ref={gridContainerRef} className="relative overflow-x-auto overflow-y-auto pb-2 rounded-xl flex-1">
                 <table className="w-full" style={{ minWidth: '1000px' }}>
                   <thead className="sticky top-0 z-20">
                     <tr>
@@ -510,84 +597,137 @@ if (error) {
                         Habit
                       </th>
                       {days.map(({ day, name }) => (
-                        <th key={day} className={`text-center py-4 px-3 text-xs font-medium ${
+                        <th key={day} ref={(el) => (dayRefs.current[day] = el)} className={`text-center py-4 px-3 text-xs font-medium ${
                           theme === 'dark' ? 'text-gray-300 bg-gray-800' : 'text-gray-700 bg-gray-100'
                         }`}>
                           <div className="flex flex-col items-center ">
-                            <span className="text-xs mb-1.5 uppercase tracking-wide opacity-70">{name}</span>
-                            <span className={`text-base font-base rounded-full w-8 h-8 flex items-center justify-center ${
-                              theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900'
-                            }`}>{day}</span>
+                            <span
+                                className={`text-xs mb-1.5 uppercase tracking-wide
+                                  ${
+                                    (() => {
+                                      const d = new Date(
+                                        currentMonthDate.getFullYear(),
+                                        currentMonthDate.getMonth(),
+                                        day
+                                      );
+                                      d.setHours(0,0,0,0);
+                                      return isToday(d)
+                                        ? 'font-semibold opacity-100'
+                                        : 'opacity-70';
+                                    })()
+                                  }
+                                `}
+                              >
+                              {name}
+                            </span>
+
+                          {(() => {
+                            const dateObj = new Date(
+                              currentMonthDate.getFullYear(),
+                              currentMonthDate.getMonth(),
+                              day
+                            );
+                            dateObj.setHours(0,0,0,0);
+
+                            const todayActive = isToday(dateObj);
+
+                            return (
+                              <span
+                                className={`text-base font-medium rounded-full w-8 h-8
+                                  flex items-center justify-center
+                                  transition-all
+                                  ${
+                                    todayActive
+                                      ? theme === 'dark'
+                                        ? 'bg-accent-dark text-white ring-2 ring-accent-dark/40'
+                                        : 'bg-accent-light text-white ring-2 ring-accent-light/40'
+                                      : theme === 'dark'
+                                        ? 'bg-gray-700 text-white'
+                                        : 'bg-gray-200 text-gray-900'
+                                  }`}
+                              >
+                                {day}
+                              </span>
+                            );
+                          })()}
+
                           </div>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                      {habits.length === 0 && (
-                        <tr>
-                          <td colSpan={days.length + 1} className="py-24">
-                            <div className="flex">
-                              
-                              {/* LEFT OFFSET = Habit column width */}
-                              <div className="pl-[200px]">
-                                
-                                {/* EMPTY STATE CARD */}
-                                <div
-                                  className={`w-[360px] mt-[-60px] rounded-3xl p-8 transition-all ${
+                    {habits.length === 0 && (
+                      <div className="    absolute left-0 right-0 bottom-0
+                              top-[120px] md:top-[140px]
+                              flex items-center justify-center
+                              pointer-events-none">
+                        <div className="pointer-events-auto">
+                          {/* EMPTY CARD */}
+                          <div
+                            className={`w-full max-w-[280px] md:max-w-[360px]
+                              rounded-2xl md:rounded-3xl
+                              p-5 md:p-8
+                              text-center
+                              ${
+                                theme === 'dark'
+                                  ? 'bg-gray-900 border border-gray-700/60'
+                                  : 'bg-white border border-gray-200 shadow-md'
+                              }`}
+                          >
+                            {/* ICON */}
+                            <div className="mb-4 flex justify-center">
+                              <div
+                                className={`w-12 h-12 md:w-16 md:h-16
+                                  rounded-xl md:rounded-2xl
+                                  flex items-center justify-center
+                                  ${
                                     theme === 'dark'
-                                      ? 'bg-gray-900 border border-gray-700/60'
-                                      : 'bg-white border border-gray-200 shadow-md'
+                                      ? 'bg-gray-800 border border-gray-700'
+                                      : 'bg-gray-100 border border-gray-200'
                                   }`}
-                                >
-                                  {/* ICON */}
-                                  <div className="mb-5">
-                                    <div
-                                      className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-                                        theme === 'dark'
-                                          ? 'bg-gray-800 border border-gray-700'
-                                          : 'bg-gray-100 border border-gray-200'
-                                      }`}
-                                    >
-                                      <span className="text-3xl">🧭</span>
-                                    </div>
-                                  </div>
-
-                                  {/* TEXT */}
-                                  <h3
-                                    className={`text-lg font-medium mb-2 ${
-                                      theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                                    }`}
-                                  >
-                                    No habits yet
-                                  </h3>
-
-                                  <p
-                                    className={`text-sm mb-5 leading-relaxed ${
-                                      theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                                    }`}
-                                  >
-                                    Start small. One habit is all it takes to begin building momentum.
-                                  </p>
-
-                                  {/* CTA */}
-                                  <Link
-                                    to="/habits/add"
-                                    className={`inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-medium text-white transition-all hover:scale-105 ${
-                                      theme === 'dark'
-                                        ? 'bg-accent-dark hover:opacity-90'
-                                        : 'bg-accent-light hover:opacity-90'
-                                    }`}
-                                  >
-                                    + Add Habit
-                                  </Link>
-                                </div>
+                              >
+                                <span className="text-2xl md:text-3xl">🧭</span>
                               </div>
                             </div>
-                          </td>
 
-                        </tr>
-                      )}
+                            {/* TEXT */}
+                            <h3
+                              className={`text-base md:text-lg font-medium mb-1.5 ${
+                                theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+                              }`}
+                            >
+                              No habits yet
+                            </h3>
+
+                            <p
+                              className={`text-xs md:text-sm mb-4 ${
+                                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                              }`}
+                            >
+                              Start with one habit and build momentum.
+                            </p>
+
+                            {/* CTA */}
+                            <Link
+                              to="/habits/add"
+                              className={`inline-flex items-center justify-center
+                                w-full md:w-auto
+                                px-4 py-2.5 rounded-xl
+                                text-sm font-medium text-white
+                                ${
+                                  theme === 'dark'
+                                    ? 'bg-accent-dark'
+                                    : 'bg-accent-light'
+                                }`}
+                            >
+                              + Add Habit
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
 
 
                       
@@ -622,7 +762,23 @@ if (error) {
                           const key = formatKey(habit._id, dateObj);
                           const isChecked = entries[key];
                           return (
-                            <td key={day} className="py-5 px-3 text-center">
+                            <td key={day} className={`py-5 px-3 text-center transition-colors
+                              ${
+                                (() => {
+                                  const d = new Date(
+                                    currentMonthDate.getFullYear(),
+                                    currentMonthDate.getMonth(),
+                                    day
+                                  );
+                                  d.setHours(0,0,0,0);
+                                  return isToday(d)
+                                    ? theme === 'dark'
+                                      ? 'bg-accent-dark/10'
+                                      : 'bg-accent-light/10'
+                                    : '';
+                                })()
+                              }
+                            `}>
                               <button
                                 disabled={!isAllowed}
                                 onClick={(e) => {
@@ -761,12 +917,14 @@ if (error) {
           {/* Right: Overall Progress Card + Metric Boxes */}
           <div className="lg:col-span-1 space-y-6">
             {/* Overall Progress Card */}
-            <div className={`rounded-3xl p-6 transition-all duration-300 ${
-              theme === 'dark' 
-                ? 'bg-gray-900 border border-gray-700/50' 
-                : 'bg-white border border-gray-200/80'
-            }`}
-            style={{ height: '600px', display: 'flex', flexDirection: 'column' }}
+            <div className={`rounded-3xl p-5 sm:p-6 lg:p-8
+                          flex flex-col transition-all duration-300
+                          h-[80vh] sm:h-[75vh] lg:h-[600px]
+                          ${theme === 'dark'
+                            ? 'bg-gray-900 border border-gray-700/50'
+                            : 'bg-white border border-gray-200/80'
+                          }`}
+            // style={{ height: '600px', display: 'flex', flexDirection: 'column' }}
             >
               <h2 className={`text-xl font-base mb-6 ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'

@@ -1,11 +1,13 @@
 import React, { useState , useEffect} from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { FiMenu, FiX } from "react-icons/fi";
 
 
 const Navbar = ({ isAuth = false }) => {
   const { theme, toggleTheme } = useTheme()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false) 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
   const handleClickOutside = (event) => {
@@ -45,7 +47,7 @@ const Navbar = ({ isAuth = false }) => {
 
           {/* Center - Navigation Links (only if authenticated) */}
           {isAuth && (
-            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-4">
+            <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:flex items-center space-x-4">
               <Link 
                 to="/dashboard" 
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -102,6 +104,7 @@ const Navbar = ({ isAuth = false }) => {
           {/* Right side - User & Theme Toggle */}
           {/* Right side - User & Theme Toggle */}
           <div className="flex items-center space-x-4">
+            
             {isAuth && (
               <div className="relative">
                 <div 
@@ -119,6 +122,7 @@ const Navbar = ({ isAuth = false }) => {
                     </span>
                   </div>
                 </div>
+
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
@@ -174,9 +178,104 @@ const Navbar = ({ isAuth = false }) => {
                 </svg>
               )}
             </button>
+                            {/* Mobile Hamburger */}
+                {isAuth && (
+                  <button
+                    className="md:hidden p-2 rounded-lg transition-colors
+                      text-gray-700 dark:text-gray-300
+                      hover:bg-gray-100 dark:hover:bg-gray-800"
+                    onClick={() => setIsMobileMenuOpen(true)}
+                  >
+                    <FiMenu size={22} />
+                  </button>
+                )}
           </div>
         </div>
       </div>
+
+
+
+      {/* Mobile Slide Menu */}
+      <div
+        className={`fixed inset-0 z-50 transition-all duration-300
+          ${isMobileMenuOpen ? "visible" : "invisible"}
+        `}
+      >
+        {/* Overlay */}
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity
+            ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}
+          `}
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+
+        {/* Drawer */}
+        <div
+          className={`absolute right-0 top-0 h-full w-72 bg-white dark:bg-[#0C111D]
+            border-l border-gray-200 dark:border-gray-800
+            transform transition-transform duration-300
+            ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
+          `}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b dark:border-gray-800">
+            <span className="text-lg font-medium text-gray-900 dark:text-white">
+              Menu
+            </span>
+            <button onClick={() => setIsMobileMenuOpen(false)}>
+              <FiX size={22} />
+            </button>
+          </div>
+
+          {/* Links */}
+          <div className="p-4 space-y-3">
+            {[
+              { to: "/dashboard", label: "Habits" },
+              { to: "/journal", label: "Journal" },
+              { to: "/analytics", label: "Analytics" },
+              { to: "/support", label: "Support" },
+              { to: "/settings", label: "Settings" },
+            ].map(item => (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-lg text-sm
+                  text-gray-700 dark:text-gray-300
+                  hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* User + Actions */}
+          <div className="mt-auto p-4 border-t dark:border-gray-800 space-y-3">
+            <div className="text-sm text-gray-500">
+              Logged in as <span className="font-medium">{userName}</span>
+            </div>
+
+            <button
+              onClick={toggleTheme}
+              className="w-full px-3 py-2 rounded-lg text-sm
+                bg-gray-100 dark:bg-gray-800"
+            >
+              Toggle Theme
+            </button>
+
+            <Link
+              to="/login"
+              onClick={handleLogout}
+              className="block text-center px-3 py-2 rounded-lg text-sm
+                text-red-600 dark:text-red-400
+                hover:bg-red-50 dark:hover:bg-gray-800"
+            >
+              Logout
+            </Link>
+          </div>
+        </div>
+      </div>
+
     </nav>
   )
 }
