@@ -87,14 +87,14 @@ const hasEntry = (day) => {
             }`}>
               Journal
             </h1>
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-sm">
               Reflect, write, and track your journey
             </p>
           </div>
 
           <Link
             to={`/journal/new?date=${new Date().toLocaleDateString('en-CA')}`}
-            className="px-6 py-3 rounded-xl text-white bg-accent-dark hover:scale-105 transition"
+            className="px-6 py-3 text-sm rounded-xl text-white bg-accent-dark hover:scale-105 transition"
           >
             + New Entry
           </Link>
