@@ -3,13 +3,17 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import Navbar from '../components/Navbar'
 import API from '../config/api' // <-- your base API file
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
 
 const JournalDashboard = () => {
   const { theme } = useTheme()
 
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+const today = new Date()
+
+const [year, setYear] = useState(today.getFullYear())
+const [month, setMonth] = useState(today.getMonth())
+
+  
 
   const [stats, setStats] = useState(null)
   const [filledDates, setFilledDates] = useState([])
@@ -29,6 +33,23 @@ const JournalDashboard = () => {
     fetchStats()
   }, [])
 
+  const goPrevMonth = () => {
+  if (month === 0) {
+    setMonth(11)
+    setYear(prev => prev - 1)
+  } else {
+    setMonth(prev => prev - 1)
+  }
+}
+
+const goNextMonth = () => {
+  if (month === 11) {
+    setMonth(0)
+    setYear(prev => prev + 1)
+  } else {
+    setMonth(prev => prev + 1)
+  }
+}
   /* ---------------- CALENDAR API ---------------- */
   useEffect(() => {
     const fetchCalendar = async () => {
@@ -41,6 +62,7 @@ const JournalDashboard = () => {
         }
       )
       const data = await res.json()
+      console.log("this is calendar data>>>", data)
       setFilledDates(data.data.filledDates)
     }
 
@@ -138,12 +160,31 @@ const hasEntry = (day) => {
               : 'bg-white border'
           }`}
         >
-          <h2 className="text-2xl text-white mb-6">
-            {today.toLocaleString('default', {
-              month: 'long',
-              year: 'numeric',
-            })}
-          </h2>
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={goPrevMonth}
+              className={`p-2 rounded-xl border ${theme == 'dark' ? 'border-white' : 'border-black'}  hover:bg-gray-700/40 transition`}
+            >
+              <FaArrowLeft />
+            </button>
+
+            <h2 className={`text-2xl w-48 text-center font-medium ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
+              {new Date(year, month).toLocaleString('default', {
+                month: 'long',
+                year: 'numeric',
+              })}
+            </h2>
+
+            <button
+              onClick={goNextMonth}
+              className={`p-2 rounded-xl border ${theme == 'dark' ? 'border-white' : 'border-black'}  hover:bg-gray-700/40 transition`}
+            >
+              <FaArrowRight />
+            </button>
+          </div>
+
 
           {/* WEEK HEADER */}
           <div className="grid grid-cols-7 gap-4 mb-4 text-xs text-gray-400">

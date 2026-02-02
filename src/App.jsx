@@ -20,7 +20,7 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        {/* GLOBAL TOASTER — bas yahi chahiye */}
+        {/* GLOBAL TOASTER —  */}
         <Toaster
           position="top-center"
           gutter={12}
