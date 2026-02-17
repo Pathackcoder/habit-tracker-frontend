@@ -127,7 +127,7 @@ const hasEntry = (day) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
             {[
               { label: 'Total Entries', value: stats.totalEntries },
-              { label: 'Streak', value: `${stats.currentStreak} days` },
+              { label: 'Last Streak', value: `${stats.currentStreak} days` },
               { label: 'Best Streak', value: `${stats.bestStreak} days` },
               { label: 'This Month', value: stats.thisMonth },
             ].map((item, idx) => (

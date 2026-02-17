@@ -1,13 +1,21 @@
-import React, { useState , useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiMenu, FiX } from "react-icons/fi"
+import API from '../config/api'
 
 
 const Navbar = ({ isAuth = false }) => {
   const { theme, toggleTheme } = useTheme()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false) 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [avatarPath, setAvatarPath] = useState(() => localStorage.getItem("avatar"))
+
+  useEffect(() => {
+    const handleAvatarUpdated = () => setAvatarPath(localStorage.getItem("avatar"))
+    window.addEventListener("avatar-updated", handleAvatarUpdated)
+    return () => window.removeEventListener("avatar-updated", handleAvatarUpdated)
+  }, [])
 
   useEffect(() => {
   const handleClickOutside = (event) => {
@@ -22,12 +30,14 @@ const Navbar = ({ isAuth = false }) => {
 
   const fullName = localStorage.getItem("name") || "";
   const userName = fullName.trim().split(/\s+/)[0];
+  const avatarUrl = avatarPath ? `${API}/uploads/${avatarPath}` : null;
   
-  const handleLogout =function(){
+  const handleLogout = function () {
     setIsDropdownOpen(false)
     localStorage.removeItem("token")
     localStorage.removeItem("id")
     localStorage.removeItem("name")
+    localStorage.removeItem("avatar")
   }
 
   return (
@@ -114,12 +124,16 @@ const Navbar = ({ isAuth = false }) => {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <span className="text-sm">Welcome, {userName}</span>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    theme === 'dark' ? 'bg-accent-dark' : 'bg-accent-light'
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
+                    avatarUrl ? '' : theme === 'dark' ? 'bg-accent-dark' : 'bg-accent-light'
                   }`}>
-                    <span className="text-white text-sm font-medium">
-                      {userName.charAt(0).toUpperCase()}
-                    </span>
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-white text-sm font-medium">
+                        {userName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -235,6 +249,7 @@ const Navbar = ({ isAuth = false }) => {
               { to: "/analytics", label: "Analytics" },
               { to: "/support", label: "Support" },
               { to: "/settings", label: "Settings" },
+              { to: "/profile", label: "Profile" },
             ].map(item => (
               <Link
                 key={item.to}

@@ -14,6 +14,7 @@ import JournalDashboard from './pages/JournalDashboard'
 import JournalEntry from './pages/JournalEntry'
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
+import Profile from './pages/Profile'
 import Intro from './pages/Intro'
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
             <Route path="/journal/new" element={<JournalEntry />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* <Route path="*" element={<Navigate to="/" />} /> */}

@@ -5,6 +5,7 @@ import { useTheme } from '../context/ThemeContext'
 import Navbar from '../components/Navbar'
 import { toast } from "react-hot-toast"
 import HabitModal from '../components/HabitModal'
+import CircularProgressIndicator from '../components/CircularProgressIndicator'
 import API from '../config/api'
 import { useRef } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa6";
@@ -32,6 +33,99 @@ ChartJS.register(
   Legend
 );
 
+const COMPLETION_OPTIONS = [25, 50, 75, 100];
+
+const HabitVectorIllustration = ({ theme }) => {
+  const isDark = theme === 'dark';
+
+  return (
+    <svg
+      viewBox="0 0 360 220"
+      className="w-full h-auto"
+      role="img"
+      aria-label="Habit progress illustration"
+    >
+      <defs>
+        <linearGradient id="habitHeroBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={isDark ? '#1B2A47' : '#E0F2FE'} />
+          <stop offset="100%" stopColor={isDark ? '#0B162E' : '#ECFEFF'} />
+        </linearGradient>
+        <linearGradient id="habitAccentBar" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={isDark ? '#5AA9FF' : '#0EA5E9'} />
+          <stop offset="100%" stopColor={isDark ? '#2DD4BF' : '#14B8A6'} />
+        </linearGradient>
+      </defs>
+
+      <rect x="0" y="0" width="360" height="220" rx="28" fill="url(#habitHeroBg)" />
+
+      <g opacity="0.22">
+        <circle cx="306" cy="36" r="52" fill={isDark ? '#60A5FA' : '#38BDF8'} />
+        <circle cx="56" cy="198" r="58" fill={isDark ? '#14B8A6' : '#22D3EE'} />
+      </g>
+
+      <g transform="translate(28 34)">
+        <rect
+          x="0"
+          y="0"
+          width="132"
+          height="126"
+          rx="18"
+          fill={isDark ? '#0F1E37' : '#FFFFFF'}
+          stroke={isDark ? '#2B3E61' : '#D1E8F5'}
+          strokeWidth="2"
+        />
+        <rect x="16" y="18" width="88" height="10" rx="5" fill={isDark ? '#3B4D70' : '#CFE6F2'} />
+        <rect x="16" y="40" width="98" height="8" rx="4" fill={isDark ? '#2B3E61' : '#E2F2F9'} />
+        <rect x="16" y="56" width="76" height="8" rx="4" fill={isDark ? '#2B3E61' : '#E2F2F9'} />
+        <rect x="16" y="72" width="90" height="8" rx="4" fill={isDark ? '#2B3E61' : '#E2F2F9'} />
+
+        <circle cx="108" cy="98" r="14" fill="url(#habitAccentBar)" />
+        <path
+          d="M101 98l5 5 10-11"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+
+      <g transform="translate(184 52)">
+        <rect
+          x="0"
+          y="0"
+          width="146"
+          height="112"
+          rx="18"
+          fill={isDark ? '#0F1E37' : '#FFFFFF'}
+          stroke={isDark ? '#2B3E61' : '#D1E8F5'}
+          strokeWidth="2"
+        />
+        <rect x="18" y="78" width="18" height="18" rx="6" fill={isDark ? '#30476D' : '#DDEFFA'} />
+        <rect x="44" y="62" width="18" height="34" rx="6" fill={isDark ? '#35598C' : '#CBEAFE'} />
+        <rect x="70" y="48" width="18" height="48" rx="6" fill={isDark ? '#3A6DB3' : '#A5E5F8'} />
+        <rect x="96" y="30" width="18" height="66" rx="6" fill="url(#habitAccentBar)" />
+        <rect x="122" y="42" width="12" height="54" rx="6" fill={isDark ? '#2DD4BF' : '#22D3EE'} />
+
+        <path
+          d="M18 36c16 8 28 11 40 6 12-5 20-18 36-17 16 1 28 17 40 14"
+          fill="none"
+          stroke={isDark ? '#84CCFF' : '#0EA5E9'}
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+      </g>
+
+      <g transform="translate(260 152)">
+        <ellipse cx="20" cy="32" rx="28" ry="11" fill={isDark ? '#0C1B31' : '#BFE8F6'} opacity="0.72" />
+        <path d="M20 8v26" stroke={isDark ? '#22D3EE' : '#0EA5E9'} strokeWidth="4" strokeLinecap="round" />
+        <path d="M20 16c-14 0-18-12-11-20 11 1 17 8 17 16" fill={isDark ? '#22D3EE' : '#14B8A6'} />
+        <path d="M20 19c12 0 18-9 13-16-9 1-14 7-13 14" fill={isDark ? '#67E8F9' : '#2DD4BF'} />
+      </g>
+    </svg>
+  );
+};
+
 const Dashboard = () => {
   const { theme } = useTheme()
   
@@ -45,8 +139,7 @@ const [entries, setEntries] = useState({})
 const [graphData, setGraphData] = useState(null)
 const [graphLoading, setGraphLoading] = useState(false)
 const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
-
-  const [checkedDays, setCheckedDays] = useState({})
+const [completionPicker, setCompletionPicker] = useState(null);
 
   const [selectedHabit, setSelectedHabit] = useState(null)
 const [isModalOpen, setIsModalOpen] = useState(false)
@@ -132,6 +225,7 @@ useEffect(() => {
         );
 
         const { data } = await res.json();
+        console.log("ye data dekho >>>>", data)
 
         completedSum += data?.completedEntries || 0;
         rateSum += data?.completionRate || 0;
@@ -165,57 +259,90 @@ const closeHabitModal = () => {
   setIsModalOpen(false)
 }
   
+const normalizeCompletionValue = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.min(100, value));
+  }
 
-const toggleDay = async (habitId, day) => {
+  if (value === true) {
+    return 100;
+  }
 
-  const now = new Date();
+  return 0;
+};
 
+const formatDateForApi = (dateObj) => {
+  return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+};
+
+const openCompletionPicker = (habitId, day) => {
   const date = new Date(
     currentMonthDate.getFullYear(),
     currentMonthDate.getMonth(),
     day
   );
-
-  // normalize local date
   date.setHours(0, 0, 0, 0);
 
-  console.log("the date>>>>>>>>", date)
-
   const key = formatKey(habitId, date);
+  const currentPercentage = normalizeCompletionValue(entries[key]);
 
-  const newCompleted = !entries[key];
+  setCompletionPicker({
+    habitId,
+    key,
+    dateStr: formatDateForApi(date),
+    dateLabel: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+    currentPercentage,
+  });
+};
 
-  // Optimistic update
-  setEntries(prev => ({
+const closeCompletionPicker = () => {
+  setCompletionPicker(null);
+};
+
+const updateDayCompletion = async (percentage) => {
+  if (!completionPicker) return;
+
+  const { habitId, key, dateStr, currentPercentage } = completionPicker;
+  setEntries((prev) => ({
     ...prev,
-    [key]: newCompleted
+    [key]: percentage,
   }));
-  const dateStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  closeCompletionPicker();
+
   try {
     const token = localStorage.getItem("token");
 
-    await fetch(`${API}/api/v1/habits/${habitId}/entries`, {
+    const res = await fetch(`${API}/api/v1/habits/${habitId}/entries`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      
       body: JSON.stringify({
         date: dateStr,
-        completed: newCompleted
+        completionPercentage: percentage
       })
     });
 
-    // Refresh graph data after entry update
-    fetchGraphData();
-    // toast.success("Updated ✔️");
-  } catch (err) {
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result?.message || "Failed to update");
+    }
 
-    // rollback
-    setEntries(prev => ({
+    const savedPercentage = result?.data?.completed
+      ? 100
+      : normalizeCompletionValue(result?.data?.completionPercentage);
+
+    setEntries((prev) => ({
       ...prev,
-      [key]: !newCompleted
+      [key]: savedPercentage,
+    }));
+
+    fetchGraphData();
+  } catch (err) {
+    setEntries((prev) => ({
+      ...prev,
+      [key]: currentPercentage,
     }));
 
     toast.error("Failed 🚨");
@@ -329,7 +456,7 @@ useLayoutEffect(() => {
       }
 
       const result = await res.json()
-
+      console.log("habit ids>>>>", result)
       setHabits(result?.data?.habits || [])
     } 
     catch (err) {
@@ -388,7 +515,10 @@ useEffect(() => {
           const d = new Date(entry.date);
           d.setHours(0,0,0,0);
           const key = formatKey(habit._id, d);
-          map[key] = entry.completed;
+          const savedPercentage = entry.completed
+            ? 100
+            : normalizeCompletionValue(entry.completionPercentage);
+          map[key] = normalizeCompletionValue(savedPercentage);
         });
       }
 
@@ -465,50 +595,125 @@ if (error) {
 
 
   return (
-    <div className={`min-h-screen  transition-colors duration-200 ${
-      theme === 'dark' ? 'bg-[#0C111D]' : 'bg-gray-50'
+    <div className={`relative min-h-screen overflow-hidden transition-colors duration-300 ${
+      theme === 'dark' ? 'bg-[#0C111D]' : 'bg-slate-50'
     }`}>
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className={`absolute -top-28 -left-20 h-80 w-80 rounded-full blur-3xl ${
+            theme === 'dark' ? 'bg-cyan-700/20' : 'bg-sky-300/35'
+          }`}
+        />
+        <div
+          className={`absolute top-1/3 -right-28 h-96 w-96 rounded-full blur-3xl ${
+            theme === 'dark' ? 'bg-blue-700/20' : 'bg-cyan-300/30'
+          }`}
+        />
+      </div>
       <Navbar isAuth={true} userName="Amit" />
       
-      <div className="max-w-full mx-auto px-3 sm:px-6 lg:px-16 py-6">
+      <div className="relative z-10 max-w-full mx-auto px-3 sm:px-6 lg:px-16 py-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className={`text-3xl font-medium mb-2 ${
-            theme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}>
-            Stoic Habit
-          </h1>
-          <p className={`text-md ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-          }`}>
-            Track your daily habits and build consistency
-          </p>
-        </div>
+<div
+  className={`relative mb-5 overflow-hidden rounded-2xl border px-5 py-5 shadow-md sm:px-6 sm:py-6 ${
+    theme === 'dark'
+      ? 'border-gray-700/60 bg-gradient-to-br from-[#0F1F3D] via-[#0E1B33] to-[#0A1428]'
+      : 'border-sky-100 bg-gradient-to-br from-white via-cyan-50 to-sky-100'
+  }`}
+>
+  <div
+    className={`absolute -right-6 -top-8 h-28 w-28 rounded-full blur-2xl ${
+      theme === 'dark' ? 'bg-sky-500/20' : 'bg-cyan-300/40'
+    }`}
+  />
+
+  <div className="relative grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-center">
+    <div>
+      <div
+        className={`mb-3 inline-flex items-center rounded-full px-3 py-1 text-xs tracking-wide ${
+          theme === 'dark'
+            ? 'bg-cyan-500/15 text-cyan-200'
+            : 'bg-cyan-100 text-cyan-700'
+        }`}
+      >
+        Build consistency every day
+      </div>
+
+      <h1
+        className={`text-2xl sm:text-3xl leading-snug ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}
+      >
+        Stoic Habit Dashboard
+      </h1>
+
+      <p
+        className={`mt-2 max-w-lg text-sm ${
+          theme === 'dark' ? 'text-slate-400' : 'text-slate-600'
+        }`}
+      >
+        Cleaner view of routines, streaks, and monthly progress.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded-lg px-3 py-1 text-xs ${
+            theme === 'dark'
+              ? 'bg-slate-800 text-slate-300'
+              : 'bg-white/80 text-slate-700'
+          }`}
+        >
+          {currentMonth}
+        </span>
+
+        <span
+          className={`rounded-lg px-3 py-1 text-xs ${
+            theme === 'dark'
+              ? 'bg-slate-800 text-cyan-300'
+              : 'bg-white/80 text-cyan-700'
+          }`}
+        >
+          {habits.length} active
+        </span>
+      </div>
+    </div>
+
+    <div className="mx-auto w-full max-w-sm lg:mx-0 lg:ml-auto">
+      <HabitVectorIllustration theme={theme} />
+    </div>
+  </div>
+</div>
+
         
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Left: Habit Grid */}
           <div className="lg:col-span-3 space-y-6">
-            <div  className={`rounded-3xl p-8 transition-all duration-300 ${
+            <div  className={`relative overflow-hidden rounded-3xl p-6 shadow-xl transition-all duration-300 sm:p-8 ${
               theme === 'dark' 
-                ? 'bg-gray-900 border border-gray-700/50' 
-                : 'bg-white border border-gray-200/80'
+                ? 'border border-gray-700/50 bg-gray-900/90' 
+                : 'border border-gray-200/80 bg-white'
             }`}
             style={{ height: '600px', display: 'flex', flexDirection: 'column' }}
             >
+                <div
+                  className={`pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full blur-2xl ${
+                    theme === 'dark' ? 'bg-cyan-500/10' : 'bg-cyan-200/50'
+                  }`}
+                />
 
                 {/* HEADER */}
-                <div className=" relative flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-8">
+                <div className="relative mb-8 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 
                   {/* LEFT : TITLE */}
-                  <div className="flex flex-col mb-4 md:mb-0">
-                    <h2 className={`text-2xl font-semibold tracking-tight ${
+                  <div className="mb-4 flex flex-col md:mb-0">
+                    <h2 className={`text-2xl font-semibold tracking-tight sm:text-[1.7rem] ${
                       theme === 'dark' ? 'text-white' : 'text-gray-900'
                     }`}>
                       Your Habits
                     </h2>
                     <span className={`text-sm ${
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
                     }`}>
                       Track your consistency over time
                     </span>
@@ -516,10 +721,10 @@ if (error) {
 
                   {/* CENTER : MONTH SELECTOR */}
                   <div className="flex justify-center md:absolute md:left-1/2 md:-translate-x-1/2 mb-4 md:mb-0">
-                    <div className={`flex items-center gap-3 px-4 py-2 rounded-xl border ${
+                    <div className={`flex items-center gap-3 rounded-xl border px-4 py-2 shadow-sm ${
                       theme === 'dark'
-                        ? 'border-gray-700 bg-gray-800/60'
-                        : 'border-gray-200 bg-gray-100/60'
+                        ? 'border-gray-700 bg-gray-800/70'
+                        : 'border-gray-200 bg-slate-100/80'
                     }`}>
                       <button
                         onClick={() => {
@@ -528,16 +733,16 @@ if (error) {
                             new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
                           );
                         }}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                           theme === 'dark'
-                            ? 'hover:bg-gray-700 text-gray-300'
-                            : 'hover:bg-gray-200 text-gray-600'
+                            ? 'text-gray-300 hover:bg-gray-700'
+                            : 'text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         <FaArrowLeft />
                       </button>
 
-                      <span className={`text-sm font-medium w-28 text-center ${
+                      <span className={`w-28 text-center text-sm font-medium ${
                         theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
                       }`}>
                         {currentMonth}
@@ -549,10 +754,10 @@ if (error) {
                             new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
                           )
                         }
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
                           theme === 'dark'
-                            ? 'hover:bg-gray-700 text-gray-300'
-                            : 'hover:bg-gray-200 text-gray-600'
+                            ? 'text-gray-300 hover:bg-gray-700'
+                            : 'text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         <FaArrowRight />
@@ -566,10 +771,10 @@ if (error) {
                   <Link
                     to="/habits/add"
                     className={`w-full md:w-auto text-center inline-flex items-center justify-center gap-2
-                      px-5 py-2.5 rounded-xl text-sm font-medium transition-all
+                      rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200
                       ${theme === 'dark'
-                        ? 'bg-accent-dark text-white'
-                        : 'bg-accent-light text-white'
+                        ? 'bg-accent-dark text-white hover:brightness-110'
+                        : 'bg-accent-light text-white hover:brightness-95'
                       }`}
                   >
                     <span className="text-lg leading-none">+</span>
@@ -581,24 +786,29 @@ if (error) {
 
                 {/* DIVIDER */}
                 <div className={`h-px mb-6 ${
-                  theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'
+                  theme === 'dark' ? 'bg-gray-800/90' : 'bg-slate-200'
                 }`} />
 
               {/* Habit Grid */}
-              <div ref={gridContainerRef} className="relative overflow-x-auto overflow-y-auto pb-2 rounded-xl flex-1">
+              <div
+                ref={gridContainerRef}
+                className={`relative flex-1 overflow-x-auto overflow-y-auto rounded-2xl pb-2 ${
+                  theme === 'dark' ? 'ring-1 ring-gray-800/80' : 'ring-1 ring-slate-200'
+                }`}
+              >
                 <table className="w-full" style={{ minWidth: '1000px' }}>
                   <thead className="sticky top-0 z-20">
                     <tr>
-                      <th className={`sticky left-0 z-10 text-left py-4 px-6 text-sm font-medium ${
-                        theme === 'dark' ? 'text-gray-300 bg-gray-800' : 'text-gray-700 bg-gray-100'
+                      <th className={`sticky left-0 z-10 px-6 py-4 text-left text-sm font-medium backdrop-blur-sm ${
+                        theme === 'dark' ? 'bg-gray-800/95 text-gray-300' : 'bg-slate-100/95 text-gray-700'
                       }`}
                       style={{ minWidth: '150px', maxWidth: '200px', width: '200px' }}
                       >
                         Habit
                       </th>
                       {days.map(({ day, name }) => (
-                        <th key={day} ref={(el) => (dayRefs.current[day] = el)} className={`text-center py-4 px-3 text-xs font-medium ${
-                          theme === 'dark' ? 'text-gray-300 bg-gray-800' : 'text-gray-700 bg-gray-100'
+                        <th key={day} ref={(el) => (dayRefs.current[day] = el)} className={`px-3 py-4 text-center text-xs font-medium backdrop-blur-sm ${
+                          theme === 'dark' ? 'bg-gray-800/95 text-gray-300' : 'bg-slate-100/95 text-gray-700'
                         }`}>
                           <div className="flex flex-col items-center ">
                             <span
@@ -633,7 +843,7 @@ if (error) {
 
                             return (
                               <span
-                                className={`text-base font-medium rounded-full w-8 h-8
+                              className={`text-base font-medium rounded-full w-8 h-8
                                   flex items-center justify-center
                                   transition-all
                                   ${
@@ -643,7 +853,7 @@ if (error) {
                                         : 'bg-accent-light text-white ring-2 ring-accent-light/40'
                                       : theme === 'dark'
                                         ? 'bg-gray-700 text-white'
-                                        : 'bg-gray-200 text-gray-900'
+                                        : 'bg-slate-200 text-gray-900'
                                   }`}
                               >
                                 {day}
@@ -732,13 +942,13 @@ if (error) {
 
                       
                     {habits.map(habit => (
-                      <tr key={habit._id} onClick={() => openHabitModal(habit)} className={`cursor-pointer border-t transition-colors duration-200 hover:bg-opacity-50 ${
-                        theme === 'dark' ? 'border-gray-800 hover:bg-gray-800/30' : 'border-gray-200 hover:bg-gray-50'
+                      <tr key={habit._id} onClick={() => openHabitModal(habit)} className={`cursor-pointer border-t transition-colors duration-200 ${
+                        theme === 'dark' ? 'border-gray-800 hover:bg-gray-800/35' : 'border-slate-200 hover:bg-slate-50'
                       }`}
                       style={{ minWidth: '200px', maxWidth: '200px', width: '200px' }}
                       >
-                        <td className={`sticky  left-0 z-10 py-5 px-3 ${
-                            theme === 'dark' ? 'bg-gray-900' : 'bg-white'
+                        <td className={`sticky left-0 z-10 px-3 py-5 ${
+                            theme === 'dark' ? 'bg-gray-900/95' : 'bg-white/95'
                           }`}>
                           <div className="flex items-center space-x-3">
                             <span className="text-2xl filter drop-shadow-sm">{habit.icon || "⭐"}</span>
@@ -760,7 +970,8 @@ if (error) {
                             const weekday = dateObj.getDay() 
                             const isAllowed = habit.frequency?.days?.includes(weekday)
                           const key = formatKey(habit._id, dateObj);
-                          const isChecked = entries[key];
+                          const completionPercentage = normalizeCompletionValue(entries[key]);
+                          const hasProgress = completionPercentage > 0;
                           return (
                             <td key={day} className={`py-5 px-3 text-center transition-colors
                               ${
@@ -783,27 +994,44 @@ if (error) {
                                 disabled={!isAllowed}
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  if (isAllowed) toggleDay(habit._id, day)
+                                  if (isAllowed) openCompletionPicker(habit._id, day)
                                 }}
-                                className={`w-9 h-9 rounded-xl border-2 transition-all duration-300 
+                                className={`relative h-9 w-9 rounded-full border-2 transition-all duration-300 
                                   
                                   ${!isAllowed 
                                     ? 'opacity-40 cursor-not-allowed' 
-                                    : 'hover:scale-110'
+                                    : 'hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400/50'
                                   }
 
-                                  ${isAllowed && isChecked
+                                  ${isAllowed && hasProgress
                                     ? theme === 'dark'
-                                      ? 'bg-accent-dark border-transparent'
-                                      : 'bg-accent-light border-transparent'
+                                      ? 'border-cyan-400/70'
+                                      : 'border-cyan-500/80'
                                     : theme === 'dark'
-                                      ? 'border-gray-700 hover:border-gray-500 hover:bg-gray-800/50'
-                                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-100'
+                                      ? 'border-gray-700 hover:border-gray-500'
+                                      : 'border-slate-300 hover:border-slate-400'
                                   }`}
+                                title={isAllowed ? `Completion: ${completionPercentage}%` : 'Not scheduled'}
                               >
-                                {isAllowed && isChecked && (
-                                  <svg className="w-5 h-5 mx-auto text-white" fill="currentColor">
-                                    <path d="M16.7 5.3a1 1 0 01..."/>
+                                <CircularProgressIndicator
+                                  percentage={completionPercentage}
+                                  theme={theme}
+                                  disabled={!isAllowed}
+                                />
+                                {isAllowed && completionPercentage === 100 && (
+                                  <svg
+                                    className="relative z-9 mx-auto h-5 w-5 text-white"
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d="M5 10.5l3.2 3.1L15 6.8"
+                                      stroke="currentColor"
+                                      strokeWidth="2.4"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
                                   </svg>
                                 )}
                               </button>
@@ -819,12 +1047,12 @@ if (error) {
             </div>
 
             {/* Daily Progress Chart - Full width below habits */}
-            <div className={`rounded-2xl shadow-lg p-6 transition-colors duration-200 ${
+            <div className={`rounded-3xl p-6 shadow-lg transition-colors duration-200 ${
               theme === 'dark' 
-                ? 'bg-gray-900 border border-gray-800' 
-                : 'bg-white border border-gray-200'
+                ? 'border border-gray-800 bg-gray-900/90' 
+                : 'border border-slate-200 bg-white'
             }`}>
-              <h2 className={`text-xl font-base mb-4 ${
+              <h2 className={`mb-4 text-xl font-semibold ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
                 Daily Progress
@@ -915,18 +1143,17 @@ if (error) {
           </div> 
 
           {/* Right: Overall Progress Card + Metric Boxes */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="space-y-6 lg:col-span-1">
             {/* Overall Progress Card */}
-            <div className={`rounded-3xl p-5 sm:p-6 lg:p-8
-                          flex flex-col transition-all duration-300
-                          h-[80vh] sm:h-[75vh] lg:h-[600px]
+            <div className={`h-[80vh] sm:h-[75vh] lg:h-[600px]
+                          flex flex-col rounded-3xl p-5 transition-all duration-300 sm:p-6 lg:p-8
                           ${theme === 'dark'
-                            ? 'bg-gray-900 border border-gray-700/50'
-                            : 'bg-white border border-gray-200/80'
+                            ? 'border border-gray-700/50 bg-gray-900/90'
+                            : 'border border-gray-200/80 bg-white shadow-lg'
                           }`}
             // style={{ height: '600px', display: 'flex', flexDirection: 'column' }}
             >
-              <h2 className={`text-xl font-base mb-6 ${
+              <h2 className={`mb-6 text-xl font-semibold ${
                 theme === 'dark' ? 'text-white' : 'text-gray-900'
               }`}>
                 Overall Progress
@@ -971,14 +1198,14 @@ if (error) {
                           <div className="flex justify-between items-center mb-2">
                             <div className="flex items-center space-x-2">
                               <span className="text-xl">{habit.icon}</span>
-                              <span className={`text-sm font-base ${
+                              <span className={`text-sm font-medium ${
                                 theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                               }`}>
                                 {habit.title}
                               </span>
                             </div>
-                            <span className={`text-sm font-base ${
-                              theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                            <span className={`text-sm font-semibold ${
+                              theme === 'dark' ? 'text-cyan-300' : 'text-cyan-700'
                             }`}>
                               {habitStats[habit._id]?.completionRate?.toFixed(1) ?? 0}%
                             </span>
@@ -1029,21 +1256,22 @@ if (error) {
               ].map((metric, idx) => (
                 <div
                   key={idx}
-                  className={`group relative rounded-2xl p-5 transition-all duration-300 transform hover:scale-105 ${
+                  className={`group relative h-[138px] overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 ${
                     theme === 'dark' 
-                      ? 'bg-gray-900 border border-gray-700/50 hover:border-gray-600' 
-                      : 'bg-white border border-gray-200/80 hover:border-gray-300 shadow-md hover:shadow-lg'
+                      ? 'border border-gray-700/50 bg-gray-900/90 hover:border-cyan-700/60' 
+                      : 'border border-gray-200/80 bg-white shadow-md hover:border-cyan-200 hover:shadow-lg'
                   }`}
-                  style={{ height: '138px' }}
                 >
                   {/* Gradient overlay on hover */}
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${metric.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${metric.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-20`}></div>
                   
                   <div className="relative h-full flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-2xl">{metric.icon}</span>
-                      <div className={`w-1 h-8 rounded-full ${
-                        theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+                      <span className={`grid h-9 w-9 place-items-center rounded-xl text-xl ${
+                        theme === 'dark' ? 'bg-gray-800/90' : 'bg-slate-100'
+                      }`}>{metric.icon}</span>
+                      <div className={`h-8 w-1 rounded-full ${
+                        theme === 'dark' ? 'bg-gray-700/90' : 'bg-gray-200'
                       }`}></div>
                     </div>
                     <div>
@@ -1052,7 +1280,7 @@ if (error) {
                       }`}>
                         {metric.label}
                       </p>
-                      <p className={`text-3xl font-normal ${
+                      <p className={`text-3xl font-semibold ${
                         theme === 'dark' ? 'text-[#379AE6]' : 'text-[#0AB5CB]'
                       }`}>
                         {metric.value}
@@ -1065,6 +1293,75 @@ if (error) {
           </div>
         </div>
       </div>
+      {completionPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4"
+          onClick={closeCompletionPicker}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-xs rounded-2xl border p-5 shadow-2xl ${
+              theme === 'dark'
+                ? 'border-gray-700 bg-gray-900'
+                : 'border-slate-200 bg-white'
+            }`}
+          >
+            <h3 className={`text-lg font-semibold ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}>
+              Set completion
+            </h3>
+            <p className={`mt-1 text-sm ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              {completionPicker.dateLabel}
+            </p>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {COMPLETION_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => updateDayCompletion(option)}
+                  className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-all ${
+                    completionPicker.currentPercentage === option
+                      ? theme === 'dark'
+                        ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200'
+                        : 'border-cyan-500 bg-cyan-50 text-cyan-700'
+                      : theme === 'dark'
+                        ? 'border-gray-700 text-gray-200 hover:border-gray-500'
+                        : 'border-slate-300 text-slate-700 hover:border-slate-400'
+                  }`}
+                >
+                  {option}%
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => updateDayCompletion(0)}
+                className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
+                  theme === 'dark'
+                    ? 'border-gray-700 text-gray-300 hover:border-gray-500'
+                    : 'border-slate-300 text-slate-700 hover:border-slate-400'
+                }`}
+              >
+                Reset
+              </button>
+              <button
+                onClick={closeCompletionPicker}
+                className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
+                  theme === 'dark'
+                    ? 'border-gray-700 text-gray-300 hover:border-gray-500'
+                    : 'border-slate-300 text-slate-700 hover:border-slate-400'
+                }`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isModalOpen && selectedHabit && (
   <HabitModal
     habit={selectedHabit}
@@ -1077,6 +1374,3 @@ if (error) {
 }
 
 export default Dashboard
-
-
-

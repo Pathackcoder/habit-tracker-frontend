@@ -47,6 +47,11 @@ const Login = () => {
       if (response.data?.user?.id && response.data?.user?.name) {
         localStorage.setItem('id', response.data.user.id)
         localStorage.setItem('name', response.data.user.name)
+        if (response.data.user.avatar) {
+          localStorage.setItem('avatar', response.data.user.avatar)
+        } else {
+          localStorage.removeItem('avatar')
+        }
       }
 
       toast.success('Welcome back 👋')
