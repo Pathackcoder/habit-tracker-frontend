@@ -110,7 +110,7 @@ const hasEntry = (day) => {
               Journal
             </h1>
             <p className="text-gray-400 text-sm">
-              Reflect, write, and track your journey
+              Reflect, write, and track your journey today!!
             </p>
           </div>
 
